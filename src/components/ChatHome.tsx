@@ -31,18 +31,11 @@ const [isLoading, setIsLoading] = useState(false);
     
     setIsLoading(true);
     try {
-      let clientId: string;
-      try {
-        const getRes = await getClientId(user.email);
-        if (getRes.success) {
-          clientId = getRes.clientId;
-        } else {
-          throw new Error('Not found');
-        }
-      } catch {
-        const addRes = await addClient(user.name, user.email);
-        clientId = addRes.clientId;
-      }
+      // First ensure client exists
+      await addClient(user.name, user.email);
+      // Then fetch the clientId
+      const getRes = await getClientId(user.email);
+      const clientId = getRes.clientId;
       setUser({ ...user, clientId });
       setShowChat(true);
     } catch (error) {
