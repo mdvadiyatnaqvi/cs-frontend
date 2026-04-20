@@ -28,6 +28,24 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return user ? <Navigate to="/dashboard" replace /> : <>{children}</>;
 };
 
+const ChatProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const storedUser = localStorage.getItem('chatUser');
+  try {
+    if (!storedUser) {
+      return <Navigate to="/" replace />;
+    }
+    const parsedUser = JSON.parse(storedUser);
+    if (!parsedUser.name || !parsedUser.email || !parsedUser.clientId) {
+      localStorage.removeItem('chatUser');
+      return <Navigate to="/" replace />;
+    }
+  } catch {
+    localStorage.removeItem('chatUser');
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
+
 const AppContent: React.FC = () => {
   return (
     <Router>
@@ -49,7 +67,14 @@ const AppContent: React.FC = () => {
           }
         />
         <Route path="/" element={<ChatLoginForm />} />
-        <Route path="/chat" element={<ChatRoom />} />
+        <Route 
+          path="/chat" 
+          element={
+            <ChatProtectedRoute>
+              <ChatRoom />
+            </ChatProtectedRoute>
+          } 
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
