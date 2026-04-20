@@ -73,4 +73,14 @@ export const addClient = async (name: string, email: string): Promise<AddClientR
   return response.data;
 };
 
+interface GetClientResponse {
+  success: boolean;
+  clientId: string;
+}
+
+export const getClientId = async (email: string): Promise<GetClientResponse> => {
+  const response = await axios.get<GetClientResponse>(`${API_BASE}/clients/get-clientId?email=${encodeURIComponent(email.toLowerCase().trim())}`);
+  return response.data;
+};
+
 export default api;

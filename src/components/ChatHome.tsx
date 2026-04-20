@@ -1,5 +1,5 @@
 import React, { useState, type FormEvent, useRef, useEffect } from 'react';
-import { addClient } from '../services/api';
+import { addClient, getClientId } from '../services/api';
 
 interface Message {
   id: number;
@@ -31,11 +31,22 @@ const [isLoading, setIsLoading] = useState(false);
     
     setIsLoading(true);
     try {
-      const { clientId } = await addClient(user.name, user.email);
+      let clientId: string;
+      try {
+        const getRes = await getClientId(user.email);
+        if (getRes.success) {
+          clientId = getRes.clientId;
+        } else {
+          throw new Error('Not found');
+        }
+      } catch {
+        const addRes = await addClient(user.name, user.email);
+        clientId = addRes.clientId;
+      }
       setUser({ ...user, clientId });
       setShowChat(true);
     } catch (error) {
-      console.error('Failed to add client:', error);
+      console.error('Client setup failed:', error);
     } finally {
       setIsLoading(false);
     }
