@@ -40,10 +40,10 @@ const [inputText, setInputText] = useState('');
         clientId = getRes.clientId;
       } catch (addError: any) {
         if (addError.response?.data?.error === 'Email already registered') {
-          setToastMsg('Email already registered. Using existing Client ID.');
+          setToastMsg('Email already registered. Please use a different email.');
           setShowToast(true);
-          const getRes = await getClientId(user.email);
-          clientId = getRes.clientId;
+          setTimeout(() => setShowToast(false), 4000);
+          return; // Stay on form
         } else {
           throw addError;
         }
