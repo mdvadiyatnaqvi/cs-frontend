@@ -1,15 +1,18 @@
 import React, { useState, type FormEvent, useRef, useEffect } from 'react';
+import { addClient } from '../services/api';
 
 interface Message {
   id: number;
   text: string;
   isUser: boolean;
   userName: string;
+  clientId: string;
 }
 
 interface User {
   name: string;
   email: string;
+  clientId: string;
 }
 
 const ChatHome: React.FC = () => {
@@ -17,12 +20,25 @@ const ChatHome: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleEnterChat = (e: FormEvent) => {
+
+
+  const handleEnterChat = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    setShowChat(true);
+    if (!user || !user.name || !user.email || isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const { clientId } = await addClient(user.name, user.email);
+      setUser({ ...user, clientId });
+      setShowChat(true);
+    } catch (error) {
+      console.error('Failed to add client:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const scrollToBottom = () => {
@@ -42,19 +58,18 @@ const ChatHome: React.FC = () => {
       text: inputText,
       isUser: true,
       userName: user.name,
+      clientId: user.clientId,
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
 
     setTimeout(() => {
-      const responses = [
-        `Hi ${user.name}! Admin login ready.`,
-        "Use /login for admin panel.",
-        `/dashboard shows profile.`,
-        "Chat unlocked with your details.",
-        "Backend API live.",
-        "Simple and responsive."
+        const responses = [
+        `Hi ${user.name} (${user.clientId})! Welcome.`,
+        "Admin login at /login → /dashboard.",
+        "Your client registered successfully.",
+        "Chat persistent per session."
       ];
       const response = responses[Math.floor(Math.random() * responses.length)];
       const botMessage: Message = {
@@ -62,6 +77,7 @@ const ChatHome: React.FC = () => {
         text: response,
         isUser: false,
         userName: 'CS Bot',
+        clientId: '',
       };
       setMessages(prev => [...prev, botMessage]);
     }, 600);
@@ -70,33 +86,40 @@ const ChatHome: React.FC = () => {
   if (!showChat || !user) {
     return (
       <div className="vh-100 d-flex align-items-center justify-content-center bg-dark">
-        <div className="card shadow-lg" style={{width: '400px'}}>
+        <div className="card shadow" style={{maxWidth: '450px', width: '100%'}}>
           <div className="card-body p-5 text-center">
+            <h2 className="card-title text-primary mb-4">Enter Chat Room</h2>
             <form onSubmit={handleEnterChat}>
-              <div className="mb-4">
-                <label className="form-label fw-bold mb-2 d-block">Name</label>
+              <div className="mb-3">
+                <label className="form-label fw-bold mb-2 d-block text-start">Full Name</label>
                 <input
                   type="text"
                   className="form-control form-lg"
-                  placeholder="Your name"
-                  onChange={(e) => setUser(prev => prev ? {...prev, name: e.target.value} : {name: e.target.value, email: ''})}
+                  placeholder="Enter your name"
+                  value={user?.name || ''}
+                  onChange={(e) => setUser({name: e.target.value, email: user?.email || '', clientId: ''})}
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="form-label fw-bold mb-2 d-block">Email</label>
+                <label className="form-label fw-bold mb-2 d-block text-start">Email</label>
                 <input
                   type="email"
                   className="form-control form-lg"
                   placeholder="your@email.com"
-                  onChange={(e) => setUser(prev => prev ? {...prev, email: e.target.value} : {name: '', email: e.target.value})}
+                  value={user?.email || ''}
+                  onChange={(e) => setUser({name: user?.name || '', email: e.target.value, clientId: ''})}
                   required
                 />
               </div>
-              <button type="submit" className="btn btn-primary btn-lg w-100">
-                Enter Chat
+              <button type="submit" className="btn btn-primary btn-lg w-100 py-3" disabled={isLoading}>
+                <i className="bi bi-chat-dots me-2"></i>
+                {isLoading ? 'Connecting...' : 'Enter Chat Room'}
               </button>
             </form>
+            <p className="mt-3 text-muted small">
+              Client ID auto-generated on backend
+            </p>
           </div>
         </div>
       </div>
@@ -106,25 +129,31 @@ const ChatHome: React.FC = () => {
   return (
     <div className="vh-100 d-flex flex-column bg-dark text-light">
       {/* Header */}
-      <nav className="navbar navbar-dark bg-primary p-3">
-        <div className="container-fluid">
-          <span className="navbar-brand mb-0 h1">
-            Welcome {user.name}
-          </span>
-          <button className="btn btn-outline-light btn-sm" onClick={() => setShowChat(false)}>
-            Leave
-          </button>
+      <div className="bg-primary p-3 border-bottom">
+        <div className="container">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{user.name}</strong> <small className="opacity-75">({user.clientId})</small>
+            </div>
+            <button className="btn btn-outline-light btn-sm" type="button" onClick={() => {
+              setShowChat(false);
+              setUser(null);
+              setMessages([]);
+            }}>
+              Leave
+            </button>
+          </div>
         </div>
-      </nav>
+      </div>
 
       {/* Messages */}
-      <div className="flex-grow-1 overflow-auto p-3">
+      <div className="flex-grow-1 overflow-auto p-4 bg-black">
         <div className="d-flex flex-column h-100 justify-content-end">
           {messages.map((message) => (
             <div key={message.id} className={`mb-2 ${message.isUser ? 'align-self-end' : 'align-self-start'}`}>
-              <div className={`p-3 rounded-3 shadow-sm ${message.isUser ? 'bg-primary text-white' : 'bg-secondary text-light'}`}>
-                <div className="small mb-1 opacity-75">
-                  {message.userName}
+              <div className={`p-3 rounded-3 ${message.isUser ? 'bg-primary text-white' : 'bg-secondary'}`}>
+                <div className="small fw-bold mb-1">
+                  {message.userName}{message.clientId && !message.isUser ? '' : ` (${message.clientId})`}
                 </div>
                 <div>{message.text}</div>
               </div>
@@ -135,24 +164,18 @@ const ChatHome: React.FC = () => {
       </div>
 
       {/* Input Bar */}
-      <form onSubmit={sendMessage} className="p-3 bg-secondary">
-        <div className="container">
-          <div className="row g-2">
-            <div className="col">
-              <input
-                type="text"
-                className="form-control"
-                placeholder={`Message as ${user.name}...`}
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-              />
-            </div>
-            <div className="col-auto">
-              <button type="submit" className="btn btn-primary px-4">
-                Send
-              </button>
-            </div>
-          </div>
+      <form onSubmit={sendMessage} className="p-3 border-top bg-black">
+        <div className="input-group">
+          <input
+            type="text"
+            className="form-control bg-secondary text-light border-end-0"
+            placeholder={`Message as ${user.name}...`}
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+          />
+          <button className="btn btn-primary" type="submit">
+            Send
+          </button>
         </div>
       </form>
     </div>

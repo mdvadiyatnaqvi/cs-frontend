@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const API_BASE = 'https://cs-backend-rho.vercel.app/api/admin';
+const API_BASE = 'https://cs-backend-rho.vercel.app/api';
 
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: `${API_BASE}/admin`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -61,6 +61,15 @@ export const loginAdmin = async (credentials: LoginCredentials): Promise<LoginRe
 
 export const getMe = async (): Promise<MeResponse> => {
   const response = await api.get<MeResponse>('/me');
+  return response.data;
+};
+
+interface AddClientResponse {
+  clientId: string;
+}
+
+export const addClient = async (name: string, email: string): Promise<AddClientResponse> => {
+  const response = await axios.post<AddClientResponse>(`${API_BASE}/clients/add-client`, { name, email });
   return response.data;
 };
 
