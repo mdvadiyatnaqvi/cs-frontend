@@ -19,8 +19,10 @@ const ChatHome: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
-const [isLoading, setIsLoading] = useState(false);
+const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
 
@@ -31,14 +33,25 @@ const [isLoading, setIsLoading] = useState(false);
     
     setIsLoading(true);
     try {
-      // First ensure client exists
-      await addClient(user.name, user.email);
-      // Then fetch the clientId
-      const getRes = await getClientId(user.email);
-      const clientId = getRes.clientId;
+      let clientId: string;
+      try {
+        await addClient(user.name, user.email);
+        const getRes = await getClientId(user.email);
+        clientId = getRes.clientId;
+      } catch (addError: any) {
+        if (addError.response?.data?.error === 'Email already registered') {
+          setToastMsg('Email already registered. Using existing Client ID.');
+          setShowToast(true);
+          const getRes = await getClientId(user.email);
+          clientId = getRes.clientId;
+        } else {
+          throw addError;
+        }
+      }
       setUser({ ...user, clientId });
+      localStorage.setItem('chatUser', JSON.stringify({ ...user, clientId }));
       setShowChat(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Client setup failed:', error);
     } finally {
       setIsLoading(false);
@@ -89,7 +102,7 @@ const [isLoading, setIsLoading] = useState(false);
 
   if (!showChat || !user) {
     return (
-      <div className="vh-100 d-flex align-items-center justify-content-center bg-dark">
+      <div className="vh-100 d-flex align-items-center justify-content-center bg-dark position-relative">
         <div className="card shadow" style={{maxWidth: '450px', width: '100%'}}>
           <div className="card-body p-5 text-center">
             <h2 className="card-title text-primary mb-4">Enter Chat Room</h2>
@@ -126,6 +139,14 @@ const [isLoading, setIsLoading] = useState(false);
             </p>
           </div>
         </div>
+        {showToast && (
+          <div className="position-absolute top-0 end-0 m-3 translate-middle-y-start" style={{zIndex: 1060}}>
+            <div className="alert alert-warning alert-dismissible fade show shadow" role="alert">
+              {toastMsg}
+              <button type="button" className="btn-close" onClick={() => setShowToast(false)} aria-label="Close"></button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
