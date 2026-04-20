@@ -4,12 +4,26 @@ interface Message {
   id: number;
   text: string;
   isUser: boolean;
+  userName: string;
+}
+
+interface User {
+  name: string;
+  email: string;
 }
 
 const ChatHome: React.FC = () => {
+  const [showChat, setShowChat] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleEnterChat = (e: FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setShowChat(true);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -21,36 +35,73 @@ const ChatHome: React.FC = () => {
 
   const sendMessage = (e: FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !user) return;
 
     const userMessage: Message = {
       id: Date.now(),
       text: inputText,
       isUser: true,
+      userName: user.name,
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
 
-    // Simple AI response
     setTimeout(() => {
       const responses = [
-        "Hello! Admin login is at /login",
-        "Dashboard /dashboard (protected)",
-        "Chat is default / route",
-        "UI simplified - no hover effects",
-        "Backend API ready",
-        "Fully responsive now"
+        `Hi ${user.name}! Admin login ready.`,
+        "Use /login for admin panel.",
+        `/dashboard shows profile.`,
+        "Chat unlocked with your details.",
+        "Backend API live.",
+        "Simple and responsive."
       ];
       const response = responses[Math.floor(Math.random() * responses.length)];
-      const aiMessage: Message = {
+      const botMessage: Message = {
         id: Date.now() + 1,
         text: response,
         isUser: false,
+        userName: 'CS Bot',
       };
-      setMessages(prev => [...prev, aiMessage]);
-    }, 800);
+      setMessages(prev => [...prev, botMessage]);
+    }, 600);
   };
+
+  if (!showChat || !user) {
+    return (
+      <div className="vh-100 d-flex align-items-center justify-content-center bg-dark">
+        <div className="card shadow-lg" style={{width: '400px'}}>
+          <div className="card-body p-5 text-center">
+            <form onSubmit={handleEnterChat}>
+              <div className="mb-4">
+                <label className="form-label fw-bold mb-2 d-block">Name</label>
+                <input
+                  type="text"
+                  className="form-control form-lg"
+                  placeholder="Your name"
+                  onChange={(e) => setUser(prev => prev ? {...prev, name: e.target.value} : {name: e.target.value, email: ''})}
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="form-label fw-bold mb-2 d-block">Email</label>
+                <input
+                  type="email"
+                  className="form-control form-lg"
+                  placeholder="your@email.com"
+                  onChange={(e) => setUser(prev => prev ? {...prev, email: e.target.value} : {name: '', email: e.target.value})}
+                  required
+                />
+              </div>
+              <button type="submit" className="btn btn-primary btn-lg w-100">
+                Enter Chat
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="vh-100 d-flex flex-column bg-dark text-light">
@@ -58,32 +109,27 @@ const ChatHome: React.FC = () => {
       <nav className="navbar navbar-dark bg-primary p-3">
         <div className="container-fluid">
           <span className="navbar-brand mb-0 h1">
-            CS Chat
+            Welcome {user.name}
           </span>
-          <span className="badge bg-success">Live</span>
+          <button className="btn btn-outline-light btn-sm" onClick={() => setShowChat(false)}>
+            Leave
+          </button>
         </div>
       </nav>
 
       {/* Messages */}
       <div className="flex-grow-1 overflow-auto p-3">
         <div className="d-flex flex-column h-100 justify-content-end">
-          {messages.length === 0 ? (
-            <div className="text-center opacity-75 mt-5">
-              <h4>Start chatting!</h4>
-              <p className="lead">Type a message below</p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <div key={message.id} className={`mb-2 ${message.isUser ? 'align-self-end' : 'align-self-start'}`}>
-                <div className={`p-3 rounded-3 shadow-sm ${message.isUser ? 'bg-primary' : 'bg-secondary'}`}>
-                  <div className="small mb-1 opacity-75">
-                    {message.isUser ? 'You' : 'Bot'}
-                  </div>
-                  <div>{message.text}</div>
+          {messages.map((message) => (
+            <div key={message.id} className={`mb-2 ${message.isUser ? 'align-self-end' : 'align-self-start'}`}>
+              <div className={`p-3 rounded-3 shadow-sm ${message.isUser ? 'bg-primary text-white' : 'bg-secondary text-light'}`}>
+                <div className="small mb-1 opacity-75">
+                  {message.userName}
                 </div>
+                <div>{message.text}</div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -96,7 +142,7 @@ const ChatHome: React.FC = () => {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Type your message..."
+                placeholder={`Message as ${user.name}...`}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
               />
