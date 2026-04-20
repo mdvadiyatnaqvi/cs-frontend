@@ -58,7 +58,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, {
     user: null,
-    loading: true,
+    loading: false,
     error: null,
   });
 
@@ -76,13 +76,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'LOGOUT' });
   };
 
-  // Check auth on mount
+  // Check auth on mount - no flash
   useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      dispatch({ type: 'CHECK_AUTH_FAIL' });
+      return;
+    }
+
     const checkAuth = async () => {
       try {
         dispatch({ type: 'LOADING' });
-        const { admin } = await getMe();
-        dispatch({ type: 'CHECK_AUTH_SUCCESS', payload: admin });
+        const data = await getMe();
+        dispatch({ type: 'CHECK_AUTH_SUCCESS', payload: data.admin });
       } catch {
         dispatch({ type: 'CHECK_AUTH_FAIL' });
       }
