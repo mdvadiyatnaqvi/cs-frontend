@@ -50,6 +50,15 @@ const AppContent: React.FC = () => {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<ChatLoginForm />} />
+        <Route 
+          path="/chat" 
+          element={
+            <ChatProtectedRoute>
+              <ChatRoom />
+            </ChatProtectedRoute>
+          } 
+        />
         <Route
           path="/login"
           element={
@@ -65,15 +74,6 @@ const AppContent: React.FC = () => {
               <AdminDashboard />
             </ProtectedRoute>
           }
-        />
-        <Route path="/" element={<ChatLoginForm />} />
-        <Route 
-          path="/chat" 
-          element={
-            <ChatProtectedRoute>
-              <ChatRoom />
-            </ChatProtectedRoute>
-          } 
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
