@@ -96,10 +96,6 @@ const AdminLogin: React.FC = () => {
               )}
             </button>
           </form>
-
-          <div className="text-center pt-3">
-            <small className="text-light opacity-75">Use backend admin credentials to login</small>
-          </div>
         </div>
       </div>
     </div>
