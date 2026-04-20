@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
-import ChatHome from './components/ChatHome';
+import ChatLoginForm from './components/ChatLoginForm';
+import ChatRoom from './components/ChatRoom';
 import './styles/AdminStyles.css';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -47,18 +48,8 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<ChatHome />} />
-        <Route path="/chat" element={<ChatHome />} />
-        <Route path="/login" element={
-          <PublicRoute>
-            <AdminLogin />
-          </PublicRoute>
-        } />
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
+        <Route path="/" element={<ChatLoginForm />} />
+        <Route path="/chat" element={<ChatRoom />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
