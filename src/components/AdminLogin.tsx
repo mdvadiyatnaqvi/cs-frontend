@@ -6,7 +6,8 @@ const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
-  const { login, error: authError, loading } = useAuth()!;
+  const [formLoading, setFormLoading] = useState(false);
+  const { login, error: authError } = useAuth()!;
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -18,21 +19,14 @@ const AdminLogin: React.FC = () => {
       return;
     }
 
+    setFormLoading(true);
     try {
       await login(email.toLowerCase().trim(), password);
       navigate('/dashboard');
     } catch {
-      // Error handled by context
+      setFormLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="vh-100 d-flex align-items-center justify-content-center p-3" style={{background: 'linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #3730a3 100%)'}}>
-        <div className="text-white fs-1 text-glow">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="vh-100 d-flex align-items-center justify-content-center p-3" style={{background: 'linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #3730a3 100%)'}}>
@@ -57,7 +51,7 @@ const AdminLogin: React.FC = () => {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
+                disabled={formLoading}
                 required
               />
             </div>
@@ -73,7 +67,7 @@ const AdminLogin: React.FC = () => {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
+                disabled={formLoading}
                 required
               />
             </div>
@@ -87,9 +81,9 @@ const AdminLogin: React.FC = () => {
             <button
               type="submit"
               className="btn btn-lg liquid-btn w-100 mb-3 float-animation shadow-lg"
-              disabled={loading}
+              disabled={formLoading}
             >
-              {loading ? (
+              {formLoading ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                   Signing in...
@@ -102,6 +96,10 @@ const AdminLogin: React.FC = () => {
               )}
             </button>
           </form>
+
+          <div className="text-center pt-3">
+            <small className="text-light opacity-75">Use backend admin credentials to login</small>
+          </div>
         </div>
       </div>
     </div>
